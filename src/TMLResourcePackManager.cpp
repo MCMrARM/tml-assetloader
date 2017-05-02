@@ -9,14 +9,15 @@ TMLResourcePackManager TMLResourcePackManager::instance;
 
 void TMLResourcePackManager::createResourcePack() {
     std::unique_ptr<PackAccessStrategy> source (new TMLPackAccessStrategy(*this, ""));
-    mcResourcePack = std::unique_ptr<ResourcePack>(new ResourcePack(std::move(source), (ResourcePack::PackType) 1,
-                                                                    (ResourcePackLocation) 0, true));
+    mcResourcePack = std::unique_ptr<ResourcePack>(new ResourcePack(std::move(source), PackCategory::FREE,
+                                                                    (PackOrigin) 0, true));
 }
 
 void TMLResourcePackManager::addModResources(tml::Mod* mod, tml::ModResources& resources, const std::string& modPath,
                                              const std::string& overridePath) {
     for (const auto& e : resources.list(modPath)) {
         if (e.isDirectory) {
+            modDirectories.insert(overridePath + e.fileName + "/");
             addModResources(mod, resources, modPath + e.fileName + "/", overridePath + e.fileName + "/");
         } else {
             modFileMap[overridePath + e.fileName].push_back({modPath + e.fileName, mod});
@@ -26,6 +27,10 @@ void TMLResourcePackManager::addModResources(tml::Mod* mod, tml::ModResources& r
 
 bool TMLResourcePackManager::hasAsset(std::string const& path) {
     return modFileMap.count(path) > 0;
+}
+
+bool TMLResourcePackManager::hasFolder(std::string const& path) {
+    return modDirectories.count(path) > 0;
 }
 
 bool TMLResourcePackManager::getAsset(std::string const& path, std::string& ret) {

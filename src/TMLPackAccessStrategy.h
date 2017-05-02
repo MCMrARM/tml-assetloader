@@ -20,10 +20,16 @@ public:
     virtual unsigned int getPackSize() const { return 7; }
     virtual ResourceLocation const& getPackLocation() const { return location; }
     virtual std::string const& getPackName() const { return name; }
+    virtual bool isIncomplete() const { return false; }
+    virtual bool isWritable() const { return false; }
     virtual bool hasAsset(std::string const&) const;
+    virtual bool hasFolder(std::string const&) const;
     virtual bool getAsset(std::string const&, std::string&) const;
+    virtual void deleteAsset(std::string const&) { }
+    virtual void writeAsset(std::string const&, std::string const&) { }
     virtual void forEachIn(std::string const&, std::function<void (std::string const&)>) const;
     virtual int getStrategyType() const { return 2; }
     virtual std::unique_ptr<PackAccessStrategy> createSubPack(std::string const&) const;
+    virtual void generateAssetSet();
 
 };

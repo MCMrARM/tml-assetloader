@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <set>
 #include <tml/mod.h>
 #include <minecraft/resource/ResourcePack.h>
 
@@ -10,6 +11,7 @@ class TMLResourcePackManager {
 private:
 
     std::map<std::string, std::vector<std::pair<std::string, tml::Mod*>>> modFileMap;
+    std::set<std::string> modDirectories;
 
 public:
 
@@ -24,6 +26,8 @@ public:
                          const std::string& overridePath = std::string());
 
     bool hasAsset(std::string const& path);
+
+    bool hasFolder(std::string const& path);
 
     bool getAsset(std::string const& path, std::string& ret);
 

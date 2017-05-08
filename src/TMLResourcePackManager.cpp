@@ -3,6 +3,7 @@
 #include <tml/mod.h>
 #include <minecraft/resource/ResourcePackManager.h>
 #include <minecraft/resource/ResourcePack.h>
+#include <minecraft/resource/PackManifest.h>
 #include "TMLPackAccessStrategy.h"
 
 TMLResourcePackManager TMLResourcePackManager::instance;
@@ -11,6 +12,7 @@ void TMLResourcePackManager::createResourcePack() {
     std::unique_ptr<PackAccessStrategy> source (new TMLPackAccessStrategy(*this, ""));
     mcResourcePack = std::unique_ptr<ResourcePack>(new ResourcePack(std::move(source), PackCategory::FREE,
                                                                     (PackOrigin) 0, true));
+    mcResourcePack->manifest = std::unique_ptr<PackManifest>(new PackManifest((ManifestType) 0));
 }
 
 void TMLResourcePackManager::addModResources(tml::Mod* mod, tml::ModResources& resources, const std::string& modPath,
@@ -40,11 +42,6 @@ bool TMLResourcePackManager::getAsset(std::string const& path, std::string& ret)
     auto size = e.second->getResources().getSize(e.first);
     if (size <= 0)
         return false;
-    {
-        std::string emptyStr;
-        *((void**) &ret) = *((void**) &emptyStr);
-        // TODO: get rid of this ugly hack
-    }
     ret.resize((size_t) size);
     e.second->getResources().open(e.first)->read(&ret[0], (size_t) size);
     return true;
@@ -68,16 +65,17 @@ TInstanceHook(void, _ZN19ResourcePackManager8setStackESt10unique_ptrI17ResourceP
     if (type == 0) {
         if (!TMLResourcePackManager::instance.mcResourcePack)
             TMLResourcePackManager::instance.createResourcePack();
-        stack->stack.push_back({TMLResourcePackManager::instance.mcResourcePack.get(), true});
+        ResourcePackRepository* np = nullptr;
+        stack->add(TMLResourcePackManager::instance.mcResourcePack.get(), *np, false);
     }
     original(this, std::move(stack), type, b);
 }
 
-TInstanceHook(std::vector<std::string>, _ZN19ResourcePackManager17loadAllVersionsOfERK16ResourceLocation,
-              ResourcePackManager, ResourceLocation const& loc) {
+TInstanceHook(std::vector<std::string>, _ZNK17ResourcePackStack17loadAllVersionsOfERK16ResourceLocation,
+              ResourcePackStack, ResourceLocation const& loc) {
     ResourcePack* tPack = TMLResourcePackManager::instance.mcResourcePack.get();
     std::vector<std::string> ret;
-    for (auto& p : fullStack->stack) {
+    for (auto& p : stack) {
         if (p.pack->hasResource(loc.path)) {
             if (p.pack == tPack) {
                 TMLResourcePackManager::instance.getAllAssets(ret, loc.path);
